@@ -54,14 +54,39 @@ class Ds_Pdf_Wm_Public
         $this->version = $version;
     }
 
-    /**Converts an url into a filesystem path
+    /**
+     * Converts an url into a filesystem path
      * @param $url
      * @return string
      */
     private function url2path($url)
     {
         $path = parse_url($url, PHP_URL_PATH);
-        return $_SERVER['DOCUMENT_ROOT'] . $path;
+        return str_replace("//", "/", $_SERVER['DOCUMENT_ROOT'] . $path);
+    }
+
+    function create_watermark_text($current_user)
+    {
+        $user_id = $current_user->ID;
+        $user_first_name = $current_user->user_firstname;
+        $user_last_name = $current_user->user_lastname;
+        $user_email = $current_user->user_email;
+        $organisation = get_user_meta($user_id, 'organisation', true);
+
+        $watermark = '';
+
+        if (!empty($organisation)) {
+            $watermark .= $organisation;
+        }
+
+        if (!empty($user_first_name) && !empty($user_last_name)) {
+            if (strlen($watermark) > 0) {
+                $watermark .= ', ';
+            }
+            $watermark .= $user_first_name . ' ' . $user_last_name;
+        }
+
+        return $watermark;
     }
 
     /**
@@ -82,22 +107,30 @@ class Ds_Pdf_Wm_Public
             return;
         }
 
-        print_r($current_user);
-        exit;
+        $watermark_text = $this->create_watermark_text($current_user);
 
-        $fileUrl = urldecode($_GET['pdfdl']);
-        $filePath = $this->url2path($fileUrl);
+        // File url
+        $file_url = urldecode($_GET['pdfdl']);
 
-        $outputPath = ROOT_PATH . 'stamped/' . $fileName;
+        // File path in local filesystem
+        $file_path = $this->url2path($file_url);
 
-        $pdfMake = new PdfMake();
-        $pdfMake->AddFooterWatermark($filePath, $outputPath);
+        $output_path = ROOT_PATH . 'stamped/' . $fileName;
 
-        $pdfUrl = ROOT_URL . 'stamped/' . $fileName;
+        try {
+            $pdf_make = new PdfMake();
+            $pdf_make->AddFooterWatermark($watermark_text, $file_path, $output_path);
+
+            $pdf_url = ROOT_URL . 'stamped/' . $fileName;
+        } catch (Exception $e) {
+            // Fallback and return original file
+
+            $pdf_url = $file_url;
+        }
 
         // Redirect user
         header('Content-type: application/pdf');
-        header("Location: " . $pdfUrl);
+        header("Location: " . $pdf_url);
         exit;
 
     }

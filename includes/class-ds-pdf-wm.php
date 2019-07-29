@@ -80,7 +80,14 @@ class Ds_Pdf_Wm
         $this->set_locale();
         $this->define_admin_hooks();
         $this->define_public_hooks();
+        $this->register_shortcodes();
+    }
 
+    function register_shortcodes()
+    {
+        $plugin_shortcodes = new Ds_Pdf_Wm_Shortcodes($this->get_plugin_name(), $this->get_version());
+
+        add_shortcode('ds-pdf-wm', array($plugin_shortcodes, 'create_pdf_download_link'));
     }
 
     /**
@@ -125,6 +132,11 @@ class Ds_Pdf_Wm
          */
         require_once plugin_dir_path(dirname(__FILE__)) . 'public/class-ds-pdf-wm-public.php';
 
+        /**
+         * Shortcodes
+         */
+        require_once plugin_dir_path(dirname(__FILE__)) . 'public/class-ds-pdf-wm-shortcodes.php';
+
         $this->loader = new Ds_Pdf_Wm_Loader();
 
     }
@@ -156,12 +168,10 @@ class Ds_Pdf_Wm
      */
     private function define_admin_hooks()
     {
-
         $plugin_admin = new Ds_Pdf_Wm_Admin($this->get_plugin_name(), $this->get_version());
 
         $this->loader->add_action('admin_enqueue_scripts', $plugin_admin, 'enqueue_styles');
         $this->loader->add_action('admin_enqueue_scripts', $plugin_admin, 'enqueue_scripts');
-
     }
 
     /**
@@ -173,14 +183,12 @@ class Ds_Pdf_Wm
      */
     private function define_public_hooks()
     {
-
         $plugin_public = new Ds_Pdf_Wm_Public($this->get_plugin_name(), $this->get_version());
 
         $this->loader->add_action('wp_enqueue_scripts', $plugin_public, 'enqueue_styles');
         $this->loader->add_action('wp_enqueue_scripts', $plugin_public, 'enqueue_scripts');
 
         $this->loader->add_action('init', $plugin_public, 'parse_request');
-
     }
 
     /**

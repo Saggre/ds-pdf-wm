@@ -10,12 +10,19 @@ use setasign\Fpdi\Fpdi;
 
 class PDF extends Fpdi
 {
+    protected $watermark_text;
+
+    public function set_watermark_text($text)
+    {
+        $this->watermark_text = $text;
+    }
+
     function Footer()
     {
         $this->SetFont('Helvetica', '', 9);
         $this->SetTextColor(255, 0, 0);
         $this->SetY(-10);
-        $this->Cell(0, 10, "Your Content", 0, 1, "C");
+        $this->Cell(0, 10, $this->watermark_text, 0, 1, "C");
     }
 }
 
@@ -31,11 +38,12 @@ class PdfMake
      * @param $outputPath
      * @return mixed
      */
-    public function AddFooterWatermark($sourcePath, $outputPath)
+    public function AddFooterWatermark($watermark_text, $source_path, $output_path)
     {
         $pdf = new PDF();
+        $pdf->set_watermark_text($watermark_text);
 
-        $pdf->setSourceFile($sourcePath);
+        $pdf->setSourceFile($source_path);
         $tplIdx = $pdf->importPage(1);
 
         $size = $pdf->getTemplateSize($tplIdx);
@@ -54,7 +62,7 @@ class PdfMake
         $pdf->SetSubject("Any Subject");
         $pdf->SetCreator("Any Creator");
 
-        $pdf->Output("F", $outputPath);
+        $pdf->Output("F", $output_path);
 
         return true;
     }
